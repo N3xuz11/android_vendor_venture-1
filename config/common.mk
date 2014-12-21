@@ -221,112 +221,127 @@ endif
 
 PRODUCT_PACKAGE_OVERLAYS += vendor/venture/overlay/common
 
-PRODUCT_VERSION_MAJOR = 0
-PRODUCT_VERSION_MINOR = 1
-PRODUCT_VERSION_MAINTENANCE = ALPHA1
+# Versioning System
+ANDROID_VERSION = 5.0.1
+VENTURE_BUILD = ALPHA3
 
-# Set VENTURE_BUILDTYPE from the env RELEASE_TYPE, for jenkins compat
-
-ifndef VENTURE_BUILDTYPE
-    ifdef RELEASE_TYPE
-        # Starting with "VENTURE_" is optional
-        RELEASE_TYPE := $(shell echo $(RELEASE_TYPE) | sed -e 's|^VENTURE_||g')
-        VENTURE_BUILDTYPE := $(RELEASE_TYPE)
-    endif
-endif
-
-# Filter out random types, so it'll reset to UNOFFICIAL
-ifeq ($(filter RELEASE NIGHTLY SNAPSHOT EXPERIMENTAL,$(VENTURE_BUILDTYPE)),)
-    VENTURE_BUILDTYPE :=
-endif
-
-ifdef VENTURE_BUILDTYPE
-    ifneq ($(VENTURE_BUILDTYPE), SNAPSHOT)
-        ifdef VENTURE_EXTRAVERSION
-            # Force build type to EXPERIMENTAL
-            VENTURE_BUILDTYPE := EXPERIMENTAL
-            # Remove leading dash from VENTURE_EXTRAVERSION
-            VENTURE_EXTRAVERSION := $(shell echo $(VENTURE_EXTRAVERSION) | sed 's/-//')
-            # Add leading dash to VENTURE_EXTRAVERSION
-            VENTURE_EXTRAVERSION := -$(VENTURE_EXTRAVERSION)
-        endif
-    else
-        ifndef VENTURE_EXTRAVERSION
-            # Force build type to EXPERIMENTAL, SNAPSHOT mandates a tag
-            VENTURE_BUILDTYPE := EXPERIMENTAL
-        else
-            # Remove leading dash from VENTURE_EXTRAVERSION
-            VENTURE_EXTRAVERSION := $(shell echo $(VENTURE_EXTRAVERSION) | sed 's/-//')
-            # Add leading dash to VENTURE_EXTRAVERSION
-            VENTURE_EXTRAVERSION := -$(VENTURE_EXTRAVERSION)
-        endif
-    endif
-else
-    # If VENTURE_BUILDTYPE is not defined, set to UNOFFICIAL
-    VENTURE_BUILDTYPE := UNOFFICIAL
-    VENTURE_EXTRAVERSION :=
-endif
-
-ifeq ($(VENTURE_BUILDTYPE), UNOFFICIAL)
-    ifneq ($(TARGET_UNOFFICIAL_BUILD_ID),)
-        VENTURE_EXTRAVERSION := -$(TARGET_UNOFFICIAL_BUILD_ID)
-    endif
-endif
-
-ifeq ($(VENTURE_BUILDTYPE), RELEASE)
-    ifndef TARGET_VENDOR_RELEASE_BUILD_ID
-        VENTURE_VERSION := $(PRODUCT_VERSION_MAJOR).$(PRODUCT_VERSION_MINOR).$(PRODUCT_VERSION_MAINTENANCE)$(PRODUCT_VERSION_DEVICE_SPECIFIC)-$(VENTURE_BUILD)
-    else
-        ifeq ($(TARGET_BUILD_VARIANT),user)
-            VENTURE_VERSION := $(PRODUCT_VERSION_MAJOR).$(PRODUCT_VERSION_MINOR)-$(TARGET_VENDOR_RELEASE_BUILD_ID)-$(VENTURE_BUILD)
-        else
-            VENTURE_VERSION := $(PRODUCT_VERSION_MAJOR).$(PRODUCT_VERSION_MINOR).$(PRODUCT_VERSION_MAINTENANCE)$(PRODUCT_VERSION_DEVICE_SPECIFIC)-$(VENTURE_BUILD)
-        endif
-    endif
-else
-    ifeq ($(PRODUCT_VERSION_MINOR),0)
-        VENTURE_VERSION := $(PRODUCT_VERSION_MAJOR)-$(shell date -u +%Y%m%d)-$(VENTURE_BUILDTYPE)$(VENTURE_EXTRAVERSION)-$(VENTURE_BUILD)
-    else
-        VENTURE_VERSION := $(PRODUCT_VERSION_MAJOR).$(PRODUCT_VERSION_MINOR)-$(shell date -u +%Y%m%d)-$(VENTURE_BUILDTYPE)$(VENTURE_EXTRAVERSION)-$(VENTURE_BUILD)
-    endif
-endif
+# Set all versions
+VENTURE_VERSION := $(TARGET_PRODUCT)-$(VENTURE_BUILD)-$(shell date -u +%Y%m%d)
+VENTURE_MOD_VERSION := $(VENTURE_BUILD)-$(shell date -u +%Y%m%d)
 
 PRODUCT_PROPERTY_OVERRIDES += \
-  ro.venture.version=$(VENTURE_VERSION) \
-  ro.venture.releasetype=$(VENTURE_BUILDTYPE) \
-  ro.modversion=$(VENTURE_VERSION) \
-  ro.cmlegal.url=http://www.cyanogenmod.org/docs/privacy
+    BUILD_DISPLAY_ID=$(BUILD_ID) \
+    ro.venture.version=$(VENTURE_VERSION) \
+    ro.mod.version=$(VENTURE_MOD_VERSION) \
 
 
-VENTURE_DISPLAY_VERSION := $(VENTURE_VERSION)
-
-ifneq ($(PRODUCT_DEFAULT_DEV_CERTIFICATE),)
-ifneq ($(PRODUCT_DEFAULT_DEV_CERTIFICATE),build/target/product/security/testkey)
-  ifneq ($(VENTURE_BUILDTYPE), UNOFFICIAL)
-    ifndef TARGET_VENDOR_RELEASE_BUILD_ID
-      ifneq ($(VENTURE_EXTRAVERSION),)
-        # Remove leading dash from VENTURE_EXTRAVERSION
-        VENTURE_EXTRAVERSION := $(shell echo $(VENTURE_EXTRAVERSION) | sed 's/-//')
-        TARGET_VENDOR_RELEASE_BUILD_ID := $(VENTURE_EXTRAVERSION)
-      else
-        TARGET_VENDOR_RELEASE_BUILD_ID := $(shell date -u +%Y%m%d)
-      endif
-    else
-      TARGET_VENDOR_RELEASE_BUILD_ID := $(TARGET_VENDOR_RELEASE_BUILD_ID)
-    endif
-    VENTURE_DISPLAY_VERSION=$(PRODUCT_VERSION_MAJOR).$(PRODUCT_VERSION_MINOR)-$(TARGET_VENDOR_RELEASE_BUILD_ID)
-  endif
-endif
-endif
-
-# by default, do not update the recovery with system updates
-PRODUCT_PROPERTY_OVERRIDES += persist.sys.recovery_update=false
-
-PRODUCT_PROPERTY_OVERRIDES += \
-  ro.venture.display.version=$(VENTURE_DISPLAY_VERSION)
-
--include $(WORKSPACE)/build_env/image-auto-bits.mk
-
--include vendor/cyngn/product.mk
-
-$(call inherit-product-if-exists, vendor/extra/product.mk)
+## Below has been removed as it is CM specific, replaced with the above versioning system.
+# PRODUCT_VERSION_MAJOR = 0
+# PRODUCT_VERSION_MINOR = 1
+# PRODUCT_VERSION_MAINTENANCE = ALPHA1
+# 
+# # Set VENTURE_BUILDTYPE from the env RELEASE_TYPE, for jenkins compat
+# 
+# ifndef VENTURE_BUILDTYPE
+#     ifdef RELEASE_TYPE
+#         # Starting with "VENTURE_" is optional
+#         RELEASE_TYPE := $(shell echo $(RELEASE_TYPE) | sed -e 's|^VENTURE_||g')
+#         VENTURE_BUILDTYPE := $(RELEASE_TYPE)
+#     endif
+# endif
+# 
+# # Filter out random types, so it'll reset to UNOFFICIAL
+# ifeq ($(filter RELEASE NIGHTLY SNAPSHOT EXPERIMENTAL,$(VENTURE_BUILDTYPE)),)
+#     VENTURE_BUILDTYPE :=
+# endif
+# 
+# ifdef VENTURE_BUILDTYPE
+#     ifneq ($(VENTURE_BUILDTYPE), SNAPSHOT)
+#         ifdef VENTURE_EXTRAVERSION
+#             # Force build type to EXPERIMENTAL
+#             VENTURE_BUILDTYPE := EXPERIMENTAL
+#             # Remove leading dash from VENTURE_EXTRAVERSION
+#             VENTURE_EXTRAVERSION := $(shell echo $(VENTURE_EXTRAVERSION) | sed 's/-//')
+#             # Add leading dash to VENTURE_EXTRAVERSION
+#             VENTURE_EXTRAVERSION := -$(VENTURE_EXTRAVERSION)
+#         endif
+#     else
+#         ifndef VENTURE_EXTRAVERSION
+#             # Force build type to EXPERIMENTAL, SNAPSHOT mandates a tag
+#             VENTURE_BUILDTYPE := EXPERIMENTAL
+#         else
+#             # Remove leading dash from VENTURE_EXTRAVERSION
+#             VENTURE_EXTRAVERSION := $(shell echo $(VENTURE_EXTRAVERSION) | sed 's/-//')
+#             # Add leading dash to VENTURE_EXTRAVERSION
+#             VENTURE_EXTRAVERSION := -$(VENTURE_EXTRAVERSION)
+#         endif
+#     endif
+# else
+#     # If VENTURE_BUILDTYPE is not defined, set to UNOFFICIAL
+#     VENTURE_BUILDTYPE := UNOFFICIAL
+#     VENTURE_EXTRAVERSION :=
+# endif
+# 
+# ifeq ($(VENTURE_BUILDTYPE), UNOFFICIAL)
+#     ifneq ($(TARGET_UNOFFICIAL_BUILD_ID),)
+#         VENTURE_EXTRAVERSION := -$(TARGET_UNOFFICIAL_BUILD_ID)
+#     endif
+# endif
+# 
+# ifeq ($(VENTURE_BUILDTYPE), RELEASE)
+#     ifndef TARGET_VENDOR_RELEASE_BUILD_ID
+#         VENTURE_VERSION := $(PRODUCT_VERSION_MAJOR).$(PRODUCT_VERSION_MINOR).$(PRODUCT_VERSION_MAINTENANCE)$(PRODUCT_VERSION_DEVICE_SPECIFIC)-$(VENTURE_BUILD)
+#     else
+#         ifeq ($(TARGET_BUILD_VARIANT),user)
+#             VENTURE_VERSION := $(PRODUCT_VERSION_MAJOR).$(PRODUCT_VERSION_MINOR)-$(TARGET_VENDOR_RELEASE_BUILD_ID)-$(VENTURE_BUILD)
+#         else
+#             VENTURE_VERSION := $(PRODUCT_VERSION_MAJOR).$(PRODUCT_VERSION_MINOR).$(PRODUCT_VERSION_MAINTENANCE)$(PRODUCT_VERSION_DEVICE_SPECIFIC)-$(VENTURE_BUILD)
+#         endif
+#     endif
+# else
+#     ifeq ($(PRODUCT_VERSION_MINOR),0)
+#         VENTURE_VERSION := $(PRODUCT_VERSION_MAJOR)-$(shell date -u +%Y%m%d)-$(VENTURE_BUILDTYPE)$(VENTURE_EXTRAVERSION)-$(VENTURE_BUILD)
+#     else
+#         VENTURE_VERSION := $(PRODUCT_VERSION_MAJOR).$(PRODUCT_VERSION_MINOR)-$(shell date -u +%Y%m%d)-$(VENTURE_BUILDTYPE)$(VENTURE_EXTRAVERSION)-$(VENTURE_BUILD)
+#     endif
+# endif
+# 
+# PRODUCT_PROPERTY_OVERRIDES += \
+#   ro.venture.version=$(VENTURE_VERSION) \
+#   ro.venture.releasetype=$(VENTURE_BUILDTYPE) \
+#   ro.modversion=$(VENTURE_VERSION) \
+#   ro.cmlegal.url=http://www.cyanogenmod.org/docs/privacy
+# 
+# 
+# VENTURE_DISPLAY_VERSION := $(VENTURE_VERSION)
+# 
+# ifneq ($(PRODUCT_DEFAULT_DEV_CERTIFICATE),)
+# ifneq ($(PRODUCT_DEFAULT_DEV_CERTIFICATE),build/target/product/security/testkey)
+#   ifneq ($(VENTURE_BUILDTYPE), UNOFFICIAL)
+#     ifndef TARGET_VENDOR_RELEASE_BUILD_ID
+#       ifneq ($(VENTURE_EXTRAVERSION),)
+#         # Remove leading dash from VENTURE_EXTRAVERSION
+#         VENTURE_EXTRAVERSION := $(shell echo $(VENTURE_EXTRAVERSION) | sed 's/-//')
+#         TARGET_VENDOR_RELEASE_BUILD_ID := $(VENTURE_EXTRAVERSION)
+#       else
+#         TARGET_VENDOR_RELEASE_BUILD_ID := $(shell date -u +%Y%m%d)
+#       endif
+#     else
+#       TARGET_VENDOR_RELEASE_BUILD_ID := $(TARGET_VENDOR_RELEASE_BUILD_ID)
+#     endif
+#     VENTURE_DISPLAY_VERSION=$(PRODUCT_VERSION_MAJOR).$(PRODUCT_VERSION_MINOR)-$(TARGET_VENDOR_RELEASE_BUILD_ID)
+#   endif
+# endif
+# endif
+# 
+# # by default, do not update the recovery with system updates
+# PRODUCT_PROPERTY_OVERRIDES += persist.sys.recovery_update=false
+# 
+# PRODUCT_PROPERTY_OVERRIDES += \
+#   ro.venture.display.version=$(VENTURE_DISPLAY_VERSION)
+# 
+# -include $(WORKSPACE)/build_env/image-auto-bits.mk
+# 
+# -include vendor/cyngn/product.mk
+# 
+# $(call inherit-product-if-exists, vendor/extra/product.mk)
